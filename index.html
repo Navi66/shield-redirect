@@ -86,8 +86,7 @@ h1{font-size:28px;font-weight:900;letter-spacing:4px;text-transform:uppercase;ma
 const CONFIG_URL = 'https://raw.githubusercontent.com/Navi66/shield-redirect/main/url.txt';
 let _deferredPrompt = null;
 
-// PWA install prompt
-window.addEventListener('beforeinstallprompt', e => {
+window.addEventListener('beforeinstallprompt', function(e) {
   e.preventDefault();
   _deferredPrompt = e;
   document.getElementById('btn-install').style.display = 'inline-flex';
@@ -101,40 +100,39 @@ async function installPWA() {
   document.getElementById('btn-install').style.display = 'none';
 }
 
-// Register SW
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(():{});
+  navigator.serviceWorker.register('sw.js').catch(function(){});
 }
 
 async function load() {
   try {
-    const r   = await fetch(CONFIG_URL + '?t=' + Date.now());
-    const url = (await r.text()).trim().replace(/\/$/, '');
+    var r   = await fetch(CONFIG_URL + '?t=' + Date.now());
+    var url = (await r.text()).trim().replace(/\/$/, '');
     if (!url || !url.startsWith('http')) throw new Error('URL invalida');
 
     document.getElementById('status').textContent = 'Verificando servidor...';
 
-    let online = false;
+    var online = false;
     try {
-      await fetch(url + '/auth.php', {signal:AbortSignal.timeout(5000),mode:'no-cors'});
+      await fetch(url + '/auth.php', {signal: AbortSignal.timeout(5000), mode: 'no-cors'});
       online = true;
     } catch(e) {}
 
     document.getElementById('spinner').style.display = 'none';
-    document.getElementById('status').textContent = online ? '✓ Servidor en linea' : 'Servidor puede estar apagado';
+    document.getElementById('status').textContent = online ? 'Servidor en linea' : 'Servidor puede estar apagado';
     document.getElementById('status').className   = online ? 'ok' : 'err';
     document.getElementById('url-display').textContent = url;
 
-    const btnGo = document.getElementById('btn-go');
-    const btnTv = document.getElementById('btn-tv');
+    var btnGo = document.getElementById('btn-go');
+    var btnTv = document.getElementById('btn-tv');
     btnGo.href = url + '/';
     btnTv.href = url + '/tv.html';
     btnGo.style.display = '';
     btnTv.style.display = '';
 
     if (online) {
-      document.getElementById('status').textContent = '✓ Redirigiendo...';
-      setTimeout(() => { window.location.href = url + '/'; }, 1200);
+      document.getElementById('status').textContent = 'Redirigiendo...';
+      setTimeout(function() { window.location.href = url + '/'; }, 1200);
     }
   } catch(e) {
     document.getElementById('spinner').style.display = 'none';
