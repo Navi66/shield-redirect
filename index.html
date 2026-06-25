@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHIELD Cinema</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#080810;color:#e8e8f0;
+    font-family:'Arial',sans-serif;
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:20px;
+    background:radial-gradient(ellipse at 30% 40%, rgba(180,45,32,.2) 0%, transparent 60%),
+               radial-gradient(ellipse at 70% 70%, rgba(20,40,120,.15) 0%, transparent 55%),
+               #080810;
+  }
+  img.shield{
+    width:90px;height:90px;
+    margin-bottom:16px;
+    filter:drop-shadow(0 6px 24px rgba(192,57,43,.7));
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{filter:drop-shadow(0 6px 24px rgba(192,57,43,.5))}
+    50%{filter:drop-shadow(0 6px 32px rgba(192,57,43,.9))}
+  }
+  h1{font-size:28px;font-weight:900;letter-spacing:4px;text-transform:uppercase;margin-bottom:4px}
+  .sub{font-size:11px;color:#d4526a;letter-spacing:4px;text-transform:uppercase;margin-bottom:32px}
+  .card{
+    background:rgba(20,18,32,.95);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;
+    padding:28px 32px;
+    width:100%;max-width:420px;
+    text-align:center;
+    box-shadow:0 32px 80px rgba(0,0,0,.6);
+  }
+  #status{font-size:14px;color:#888;margin-bottom:20px;line-height:1.6}
+  #status.ok{color:#52c87a}
+  #status.err{color:#e74c3c}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    background:linear-gradient(135deg,#d4526a,#b02d20);
+    color:#fff;border:none;
+    padding:13px 28px;border-radius:30px;
+    font-size:14px;font-weight:700;letter-spacing:.5px;
+    text-decoration:none;cursor:pointer;
+    box-shadow:0 6px 24px rgba(180,45,32,.4);
+    transition:all .2s;margin-top:8px;
+    width:100%;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(180,45,32,.55)}
+  .btn.secondary{
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.12);
+    color:#aaa;box-shadow:none;margin-top:10px;font-size:13px;
+  }
+  .btn.secondary:hover{background:rgba(255,255,255,.12);color:#fff}
+  #url-display{
+    font-size:11px;color:#555;margin-top:16px;
+    word-break:break-all;line-height:1.5;
+  }
+  .spinner{
+    width:36px;height:36px;border-radius:50%;
+    border:3px solid rgba(255,255,255,.08);
+    border-top-color:#d4526a;
+    animation:spin .8s linear infinite;
+    margin:0 auto 16px;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<img class="shield" src="https://raw.githubusercontent.com/Navi66/shield-redirect/main/shield.png" 
+     onerror="this.style.fontSize='60px';this.outerHTML='<div style=font-size:60px>🛡</div>'">
+<h1>SHIELD</h1>
+<div class="sub">Cinema</div>
+
+<div class="card">
+  <div class="spinner" id="spinner"></div>
+  <div id="status">Conectando con el servidor...</div>
+  <div id="url-display"></div>
+  <a id="btn-go" class="btn" style="display:none">▶ Entrar a SHIELD Cinema</a>
+  <a id="btn-tv" class="btn secondary" style="display:none">📺 Versión TV / Firestick</a>
+</div>
+
+<script>
+const CONFIG_URL = 'https://raw.githubusercontent.com/Navi66/shield-redirect/main/url.txt';
+
+async function load() {
+  try {
+    // Obtener URL del túnel desde GitHub
+    const r   = await fetch(CONFIG_URL + '?t=' + Date.now());
+    const url = (await r.text()).trim().replace(/\/$/, '');
+
+    if (!url || !url.startsWith('http')) throw new Error('URL inválida');
+
+    // Verificar que el servidor responde
+    document.getElementById('status').textContent = 'Verificando servidor...';
+
+    let online = false;
+    try {
+      const check = await fetch(url + '/auth.php', {
+        signal: AbortSignal.timeout(5000),
+        mode: 'no-cors'
+      });
+      online = true;
+    } catch(e) { online = false; }
+
+    const spinner = document.getElementById('spinner');
+    spinner.style.display = 'none';
+
+    if (online) {
+      document.getElementById('status').textContent = '✓ Servidor en línea';
+      document.getElementById('status').className = 'ok';
+    } else {
+      document.getElementById('status').textContent = '⚠ El servidor puede estar apagado';
+      document.getElementById('status').className = 'err';
+    }
+
+    document.getElementById('url-display').textContent = url;
+
+    const btnGo = document.getElementById('btn-go');
+    const btnTv = document.getElementById('btn-tv');
+    btnGo.href = url + '/';
+    btnTv.href = url + '/tv.html';
+    btnGo.style.display = '';
+    btnTv.style.display = '';
+
+    // Redirigir automáticamente si está online
+    if (online) {
+      document.getElementById('status').textContent = '✓ Redirigiendo...';
+      setTimeout(() => { window.location.href = url + '/'; }, 1200);
+    }
+
+  } catch(e) {
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('status').textContent = '✗ No se pudo obtener la URL del servidor';
+    document.getElementById('status').className = 'err';
+  }
+}
+
+load();
+</script>
+</body>
+</html>
